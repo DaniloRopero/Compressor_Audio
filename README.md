@@ -4,11 +4,6 @@ Código de apoio ao Trabalho de Conclusão de Curso **"Desenvolvimento de um
 Sistema de Compressão Dinâmica em Tempo Real Utilizando Processamento Digital
 de Sinais"**.
 
-Bacharelado em Engenharia de Controle e Automação
-Instituto Federal de São Paulo — Câmpus Catanduva
-Autor: Danilo Francisco Ropero Sivirino
-Orientador: Prof. Dr. João Domingos Augusto dos Santos Pereira
-
 ---
 
 ## O que é
