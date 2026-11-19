@@ -43,6 +43,45 @@ exc_in  = pk_t2_in  - pk_t1_in;
 exc_out = pk_t2_out - pk_t1_out;
 exc_red = exc_in - exc_out;
 
+% ---------------------------------------------------------------
+%  Janela de guarda: medicao em regime permanente
+%
+%  O pico bruto do Trecho 2 captura o sobressinal do ataque, que
+%  ocorre no instante da transicao, quando o filtro de envelope
+%  ainda nao atuou. Medir ali e medir o transitorio, nao o regime.
+%  Descartam-se 50 ms (5*tauA) apos cada transicao de trecho,
+%  mesmo criterio adotado na Secao 8.6.2.
+% ---------------------------------------------------------------
+n_guarda = round(0.050 * fs);
+
+mask_rp = true(size(y));
+for ini = [1, n1+1, n2+1]
+    fim = min(ini + n_guarda - 1, N);
+    mask_rp(ini:fim) = false;
+end
+
+pk_t2_out_rp = 20*log10(max(abs(y(n1+1+n_guarda : n2))) + 1e-9);
+exc_out_rp   = pk_t2_out_rp - pk_t1_out;
+exc_red_rp   = exc_in - exc_out_rp;
+
+% ---------------------------------------------------------------
+%  Fator de crista global
+%
+%  CF = 20*log10(pico/eficaz). E esta a grandeza que os scripts
+%  designam por DR; a distincao esta registrada na Secao 5.9.6.
+% ---------------------------------------------------------------
+rms_in     = sqrt(mean(x.^2));
+rms_out    = sqrt(mean(y.^2));
+CF_in      = 20*log10(max(abs(x))          / (rms_in  + 1e-9));
+CF_out     = 20*log10(max(abs(y))          / (rms_out + 1e-9));
+CF_out_rp  = 20*log10(max(abs(y(mask_rp))) / (rms_out + 1e-9));
+dCF        = CF_in - CF_out_rp;
+
+% Instante e valor do sobressinal, para a legenda do painel
+[~, i_ovs] = max(abs(y(n1+1 : min(n1+n_guarda, N))));
+t_ovs      = (n1 + i_ovs) / fs;
+pk_ovs     = 20*log10(abs(y(n1+i_ovs)) + 1e-9);
+
 % GR teorica no pico do T2 (sem suavizacao temporal)
 GR_t2_teo = (T + (pk_t2_in - T)/R) - pk_t2_in;
 
@@ -53,7 +92,11 @@ est_R = abs(alphaR) < 1;
 fprintf('=== METRICAS ===\n');
 fprintf('RMS in=%.2f  out=%.2f  delta=%+.2f dBFS\n',RMS_in,RMS_out,RMS_out-RMS_in);
 fprintf('GR min=%.2f  med=%.2f dB\n',GR_min,GR_med);
-fprintf('Excursao T2-T1: in=%.2f  out=%.2f  red=%.2f dB\n',exc_in,exc_out,exc_red);
+fprintf('Excursao T2-T1: in=%.2f  out(bruto)=%.2f  red(bruto)=%.2f dB\n',exc_in,exc_out,exc_red);
+fprintf('Excursao T2-T1 em regime: out=%.2f  REDUCAO EFETIVA=%.2f dB\n',exc_out_rp,exc_red_rp);
+fprintf('Sobressinal do ataque: %.2f dBFS em t=%.3f s\n',pk_ovs,t_ovs);
+fprintf('Fator de crista: CFin=%.2f  CFout(bruto)=%.2f  CFout(regime)=%.2f  dCF=%+.2f dB\n',...
+        CF_in,CF_out,CF_out_rp,dCF);
 fprintf('alphaA=%.6f  alphaR=%.6f\n',alphaA,alphaR);
 
 % =========================================================
@@ -228,32 +271,35 @@ ax5 = axes('Position',[0.345 0.112 0.295 0.400],...
            'XTick',[],'YTick',[],'Box','on','LineWidth',1.0);
 xlim([0 1]); ylim([0 1]);
 
-text(0.50, 0.94, 'EXCURSÃO DINÂMICA',...
-     'Color',C_GRN,'FontSize',10.5,'FontWeight','bold',...
+text(0.50, 0.95, 'EXCURSÃO E FATOR DE CRISTA',...
+     'Color',C_GRN,'FontSize',10,'FontWeight','bold',...
      'HorizontalAlignment','center','FontName','Courier New','Parent',ax5);
 
-if exc_red >= 0; c_exc = C_GRN; else; c_exc = C_RED; end
+if exc_red_rp >= 0; c_exc = C_GRN; else; c_exc = C_RED; end
+if dCF       >= 0; c_cf  = C_GRN; else; c_cf  = C_RED; end
 
 p5_txt = {
-    'Diferença de pico, Trecho 2 - Trecho 1:';
-    sprintf('  Entrada: %s - %s = %s dB', numvir(pk_t2_in,2),  numvir(pk_t1_in,2),  numvir(exc_in,2));
-    sprintf('  Saída  : %s - %s = %s dB', numvir(pk_t2_out,2), numvir(pk_t1_out,2), numvir(exc_out,2));
-    sprintf('  Redução: %s - %s = %s dB', numvir(exc_in,2), numvir(exc_out,2), numvir(exc_red,2));
+    'Excursão de pico, Trecho 2 - Trecho 1:';
+    sprintf('  Entrada ................ %s dB', numvir(exc_in,2));
+    sprintf('  Saída, pico bruto ...... %s dB', numvir(exc_out,2));
+    sprintf('  Saída, regime perm. .... %s dB', numvir(exc_out_rp,2));
+    sprintf('  Redução efetiva ........ %s dB', numvir(exc_red_rp,2));
     ' ';
-    'Interpretação:';
-    '  O compressor atenuou o Trecho 2 em';
-    sprintf('  relação ao Trecho 1 em %s dB.',numvir(exc_red,2));
-    '  A redução é pequena porque a';
-    sprintf('  compensação (+%d dB) reequilibra',M);
-    '  os níveis.';
-    'Evidência principal:';
-    sprintf('  GR máxima = %s dB (Trecho 2)',numvir(GR_min,2));
+    'Fator de crista global:';
+    sprintf('  CF entrada ............. %s dB', numvir(CF_in,2));
+    sprintf('  CF saída, regime perm. . %s dB', numvir(CF_out_rp,2));
+    sprintf('  Delta CF ............... %s dB', numvir(dCF,2));
+    ' ';
+    sprintf('O pico bruto do T2 inclui o sobressinal');
+    sprintf('do ataque (%s dBFS em t = %s s), quando', numvir(pk_ovs,2), numvir(t_ovs,3));
+    'o filtro ainda não atuara. A janela de';
+    'guarda de 50 ms isola o regime.';
 };
-p5_col = {C_TX;C_GR;C_GR;c_exc;C_GR;C_TX;C_GR;C_GR;C_GR;C_GR;C_GR;C_TX;C_ORA};
-ypos5  = linspace(0.86, 0.06, 13);
-for k = 1:13
-    sz = 9.5; if k==4; sz=10; end
-    text(0.04, ypos5(k), p5_txt{k},...
+p5_col = {C_TX;C_GR;C_GR;C_GR;c_exc;C_GR;C_TX;C_GR;C_GR;c_cf;C_GR;C_GR;C_ORA;C_GR;C_GR};
+ypos5  = linspace(0.86, 0.04, 15);
+for k = 1:15
+    sz = 8.2; if any(k==[5 10]); sz=9; end
+    text(0.035, ypos5(k), p5_txt{k},...
          'Color',p5_col{k},'FontSize',sz,'FontName','Courier New','Parent',ax5);
 end
 
@@ -269,22 +315,22 @@ text(0.50, 0.94, 'ESTABILIDADE BIBO',...
      'Color',C_YEL,'FontSize',10.5,'FontWeight','bold',...
      'HorizontalAlignment','center','FontName','Courier New','Parent',ax6);
 
-if est_A; stA='ESTAVEL'; cA=C_GRN; else; stA='INSTAVEL'; cA=C_RED; end
-if est_R; stR='ESTAVEL'; cR=C_GRN; else; stR='INSTAVEL'; cR=C_RED; end
+if est_A; stA='ESTÁVEL'; cA=C_GRN; else; stA='INSTÁVEL'; cA=C_RED; end
+if est_R; stR='ESTÁVEL'; cR=C_GRN; else; stR='INSTÁVEL'; cR=C_RED; end
 
 % Painel em Courier New: a fonte nao possui alfa, seta nem o sinal de
 % multiplicacao. Os rotulos ficam em ASCII de proposito -- caracteres
 % ausentes saem como retangulos vazios na exportacao.
 p6_txt = {
-    'H(z) = (1-a)z / (z-a)   [Equacao 4.27]';
-    'Condicao: |polo| < 1    [Equacao 4.28]';
+    'H(z) = (1-a)z / (z-a)   [Equação 4.27]';
+    'Condição: |polo| < 1    [Equação 4.28]';
     ' ';
     'Filtro de ATAQUE:';
     sprintf('  aA = exp(-1/(%de-3 * %d))', tA, fs);
     sprintf('  aA = %s', numvir(alphaA,8));
     sprintf('  |aA| < 1  ->  %s', stA);
     ' ';
-    'Filtro de LIBERACAO:';
+    'Filtro de LIBERAÇÃO:';
     sprintf('  aR = exp(-1/(%de-3 * %d))', tR, fs);
     sprintf('  aR = %s', numvir(alphaR,8));
     sprintf('  |aR| < 1  ->  %s', stR);
