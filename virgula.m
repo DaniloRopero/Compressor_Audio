@@ -55,6 +55,12 @@ function converte(a, eixo)
             rot{k} = strrep(sprintf(fmt, tk(k)), '.', ',');
         end
 
+        % Congela tambem a POSICAO dos ticks. Sem isto, o exportgraphics
+        % pode redistribuir os ticks (ex.: de 8 para 5) e manter a lista
+        % antiga de rotulos -- os numeros passam a nao corresponder aos
+        % dados. Defeito observado nos paineis de zoom de G2 e G3.
+        set(a, [eixo 'Tick'], tk);
+        set(a, [eixo 'TickMode'], 'manual');
         set(a, [eixo 'TickLabel'], rot);
         set(a, [eixo 'TickLabelMode'], 'manual');
     catch

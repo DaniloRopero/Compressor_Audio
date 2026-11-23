@@ -94,6 +94,9 @@ title(sprintf('Zoom: Transitório de Ataque  |  t = [%s; %s] s  |  τ_A = %d ms'
 xlabel('Tempo (s)','FontSize',10,'Color',COR_EIXO);
 ylabel('Amplitude','FontSize',10,'Color',COR_EIXO);
 xlim(t_zoom); grid on;
+% Limites e ticks fixados: sem isto o exportgraphics redistribuia os
+% ticks do zoom e os rotulos deixavam de corresponder aos dados.
+ylim([-1.75 1.75]); yticks(-1.5:0.5:1.5);
 set(ax2,'Color',COR_BG_AX,'XColor',COR_EIXO,'YColor',COR_EIXO,...
         'GridColor',COR_GRID,'GridAlpha',0.6,'FontSize',9,'Box','on');
 
