@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<JUCERPROJECT id="RcaDad" name="CompressorOffline" projectType="consoleapp"
+              useAppConfig="0" addUsingNamespaceToJuceHeader="0" jucerFormatVersion="1">
+  <MAINGROUP id="R2Pugk" name="CompressorOffline">
+    <GROUP id="{61473A90-8935-7B1A-1495-213A53B90E1D}" name="Source">
+      <FILE id="S2x6pg" name="CompressorCore.cpp" compile="1" resource="0"
+            file="../NewProject/Source/CompressorCore.cpp"/>
+      <FILE id="De6Kmq" name="CompressorCore.h" compile="0" resource="0"
+            file="../NewProject/Source/CompressorCore.h"/>
+      <FILE id="y0oahC" name="Main.cpp" compile="1" resource="0" file="Source/Main.cpp"/>
+    </GROUP>
+    <FILE id="gtucjh" name="AdaptiveController.cpp" compile="1" resource="0"
+          file="../NewProject/Source/AdaptiveController.cpp"/>
+    <FILE id="c19edm" name="AdaptiveController.h" compile="0" resource="0"
+          file="../NewProject/Source/AdaptiveController.h"/>
+  </MAINGROUP>
+  <MODULES>
+    <MODULE id="juce_audio_basics" showAllCode="1" useLocalCopy="0" useGlobalPath="0"/>
+    <MODULE id="juce_audio_formats" showAllCode="1" useLocalCopy="0" useGlobalPath="0"/>
+    <MODULE id="juce_core" showAllCode="1" useLocalCopy="0" useGlobalPath="0"/>
+    <MODULE id="juce_events" showAllCode="1" useLocalCopy="0" useGlobalPath="0"/>
+  </MODULES>
+  <JUCEOPTIONS JUCE_STRICT_REFCOUNTEDPOINTER="1"/>
+  <EXPORTFORMATS>
+    <VS2026 targetFolder="Builds/VisualStudio2026">
+      <CONFIGURATIONS>
+        <CONFIGURATION isDebug="1" name="Debug" targetName="CompressorOffline"/>
+        <CONFIGURATION isDebug="0" name="Release" targetName="CompressorOffline"/>
+      </CONFIGURATIONS>
+      <MODULEPATHS>
+        <MODULEPATH id="juce_audio_basics" path="../modules"/>
+        <MODULEPATH id="juce_audio_formats" path="../modules"/>
+        <MODULEPATH id="juce_core" path="../modules"/>
+        <MODULEPATH id="juce_events" path="../modules"/>
+      </MODULEPATHS>
+    </VS2026>
+  </EXPORTFORMATS>
+</JUCERPROJECT>
